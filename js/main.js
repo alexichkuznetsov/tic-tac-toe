@@ -20,7 +20,8 @@ const UIController = (function() {
     errorMessage: '.error',
     activePlayer: '#active-player',
     grid: '.grid',
-    gridCell: '.grid__cell'
+    gridCell: '.grid__cell',
+    cancelButton: '#cancel-button'
   };
 
   function validateNames() {
@@ -101,7 +102,7 @@ const UIController = (function() {
           </div>
         </div>
 
-        <button class="game__btn">
+        <button class="game__btn" id="cancel-button">
           Завершить
         </button>
       `;
@@ -141,7 +142,7 @@ const UIController = (function() {
 
 // Game controller
 const GameController = (function() {
-  const state = {
+  let state = {
     gameStage: NOT_STARTED,
     board: [
       [CELL_EMPTY, CELL_EMPTY, CELL_EMPTY],
@@ -164,6 +165,20 @@ const GameController = (function() {
     return false;
   }
 
+  function resetGame() {
+    state = {
+      gameStage: NOT_STARTED,
+      board: [
+        [CELL_EMPTY, CELL_EMPTY, CELL_EMPTY],
+        [CELL_EMPTY, CELL_EMPTY, CELL_EMPTY],
+        [CELL_EMPTY, CELL_EMPTY, CELL_EMPTY]
+      ],
+      players: [],
+      activePlayer: null,
+      activeSign: null
+    };
+  }
+
   return {
     getState: () => ({ ...state }),
     setStage: stage => (state.gameStage = stage),
@@ -175,12 +190,25 @@ const GameController = (function() {
     getActiveSign: () => state.activeSign,
     chooseWhosFirst: () => Math.round(Math.random()),
     setCell,
-    checkCellIfEmpty
+    checkCellIfEmpty,
+    resetGame
   };
 })();
 
 // Main application controller
 const App = (function(UIController, GameController) {
+  function setListenerOnStartButton() {
+    const btn = UIController.getElement(UIController.getSelectors().startBtn);
+
+    btn.addEventListener('click', handleStartButtonClick);
+  }
+
+  function clearListenerOnStartButton() {
+    const btn = UIController.getElement(UIController.getSelectors().startBtn);
+
+    btn.removeEventListener('click');
+  }
+
   function handleStartButtonClick() {
     const check = UIController.validateNames();
 
@@ -192,13 +220,22 @@ const App = (function(UIController, GameController) {
       GameController.setActivePlayer(GameController.chooseWhosFirst());
       GameController.setActiveSign(CIRCLE_SIGN);
 
+      clearListenerOnStartButton();
+
       GameController.setStage(GAME_STARTED);
       UIController.changeStage(GAME_STARTED);
 
+      UIController.renderActivePlayer(GameController.getActivePlayerName());
+
+      // Event listener on grid cell click
       UIController.getElement(
         UIController.getSelectors().grid
       ).addEventListener('click', handleGridClick);
-      UIController.renderActivePlayer(GameController.getActivePlayerName());
+
+      // Event listener on cancel button click
+      UIController.getElement(
+        UIController.getSelectors().cancelButton
+      ).addEventListener('click', handleCancelButtonClick);
     }
   }
 
@@ -226,13 +263,35 @@ const App = (function(UIController, GameController) {
     }
   }
 
+  function handleCancelButtonClick() {
+    console.log('Reseting game..');
+
+    GameController.resetGame();
+    clearListenerOnGridClick();
+
+    GameController.setStage(NOT_STARTED);
+    UIController.changeStage(NOT_STARTED);
+
+    setListenerOnStartButton();
+  }
+
+  function clearListenerOnStartButton() {
+    const btn = UIController.getElement(UIController.getSelectors().startBtn);
+
+    btn.removeEventListener('click', handleStartButtonClick);
+  }
+
+  function clearListenerOnGridClick() {
+    const grid = UIController.getElement(UIController.getSelectors().grid);
+
+    grid.removeEventListener('click', handleGridClick);
+  }
+
   return {
     init() {
       console.log('App initialized..');
 
-      const btn = UIController.getElement(UIController.getSelectors().startBtn);
-
-      btn.addEventListener('click', handleStartButtonClick);
+      setListenerOnStartButton();
     }
   };
 })(UIController, GameController);
