@@ -44,6 +44,27 @@ body {
   margin-bottom: 2.25rem;
 }
 
+.form__input {
+  display: block;
+  margin: 0.75rem auto;
+  padding: 1rem 1.5rem;
+
+  border: 1px solid #eee;
+
+  font: inherit;
+  font-size: 1.4rem;
+}
+
+.form__input:focus {
+  outline: none;
+  border-color: #ccc;
+}
+
+.error {
+  font-size: 1.4rem;
+  color: salmon;
+}
+
 .game__btn {
   display: inline-block;
   border: none;
@@ -92,6 +113,8 @@ body {
 .grid__cell {
   flex: 1;
   height: 8rem;
+
+  border: 1px solid rgba(0, 0, 0, 0.05);
 
   background-repeat: no-repeat;
   background-position: center;
