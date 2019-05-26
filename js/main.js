@@ -179,6 +179,52 @@ const GameController = (function() {
     };
   }
 
+  function checkWinCondition() {
+    const winCondition = state.activeSign === CROSS_SIGN ? -3 : 3;
+
+    return (
+      checkRows(winCondition) ||
+      checkCols(winCondition) ||
+      checkDiags(winCondition)
+    );
+  }
+
+  function checkRows(winCondition) {
+    for (let row = 0; row < 3; row++) {
+      let sum = 0;
+
+      for (let col = 0; col < 3; col++) {
+        sum += state.board[row][col];
+      }
+
+      if (sum === winCondition) return true;
+    }
+
+    return false;
+  }
+
+  function checkCols(winCondition) {
+    for (let col = 0; col < 3; col++) {
+      let sum = 0;
+
+      for (let row = 0; row < 3; row++) {
+        sum += state.board[row][col];
+      }
+
+      if (sum === winCondition) return true;
+    }
+
+    return false;
+  }
+
+  function checkDiags(winCondition) {
+    return (
+      state.board[0][0] + state.board[1][1] + state.board[2][2] ===
+        winCondition ||
+      state.board[0][2] + state.board[1][1] + state.board[2][0] === winCondition
+    );
+  }
+
   return {
     getState: () => ({ ...state }),
     setStage: stage => (state.gameStage = stage),
@@ -191,7 +237,8 @@ const GameController = (function() {
     chooseWhosFirst: () => Math.round(Math.random()),
     setCell,
     checkCellIfEmpty,
-    resetGame
+    resetGame,
+    checkWinCondition
   };
 })();
 
@@ -252,6 +299,11 @@ const App = (function(UIController, GameController) {
 
       // Change sign in the UI
       UIController.renderSign(cell, sign);
+
+      // Check if player has won
+      const check = GameController.checkWinCondition();
+
+      if (check) console.log(GameController.getActivePlayerName(), ' has won!');
 
       // Change active player & active sign
       GameController.setActivePlayer(+!GameController.getActivePlayer());

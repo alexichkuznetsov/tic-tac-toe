@@ -110,11 +110,13 @@ body {
   display: flex;
 }
 
+.grid__row:not(:last-child) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
 .grid__cell {
   flex: 1;
   height: 8rem;
-
-  border: 1px solid rgba(0, 0, 0, 0.05);
 
   background-repeat: no-repeat;
   background-position: center;
@@ -122,6 +124,10 @@ body {
 
   cursor: pointer;
   transition: background-color 0.2s ease;
+}
+
+.grid__cell:not(:last-child) {
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .grid__cell--cross {
