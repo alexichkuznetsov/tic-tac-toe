@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css?family=PT+Sans:400,700&display=swap&subset=cyrillic');
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 62.5%;
+}
+
+body {
+  box-sizing: border-box;
+
+  font-family: 'PT Sans', sans-serif;
+  font-weight: 400;
+  color: #212121;
+
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game {
+  flex: 0 1 36rem;
+
+  padding: 2.25rem 0;
+  text-align: center;
+
+  box-shadow: 0 0 2rem rgba(0, 0, 0, 0.1);
+}
+
+.game__title {
+  font-size: 2.25rem;
+  font-weight: 400;
+  margin-bottom: 2.25rem;
+}
+
+.game__btn {
+  display: inline-block;
+  border: none;
+  background-color: transparent;
+
+  padding: 1.25rem 1.75rem;
+
+  font-size: 1.4rem;
+  cursor: pointer;
+  outline: none;
+
+  transition: background-color 0.2s ease;
+  backface-visibility: hidden;
+}
+
+.game__btn:hover {
+  background-color: #f1f1f1;
+}
+
+.game__btn:active {
+  background-color: #eaeaea;
+}
+
+.game__status {
+  font-size: 1.8rem;
+
+  margin-bottom: 2.25rem;
+}
+
+.game__player-name {
+  color: steelblue;
+}
+
+.grid {
+  max-width: 24rem;
+  height: 24rem;
+  margin: 0 auto;
+
+  margin-bottom: 2.25rem;
+}
+
+.grid__row {
+  display: flex;
+}
+
+.grid__cell {
+  flex: 1;
+  height: 8rem;
+
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 4rem;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.grid__cell--cross {
+  background-image: url('../img/cross.svg');
+}
+
+.grid__cell--circle {
+  background-image: url('../img/circle.svg');
+}
+
+.grid__cell:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.05);
+}
+
+.game__result {
+  font-size: 1.8rem;
+  margin-bottom: 1.25rem;
+}
