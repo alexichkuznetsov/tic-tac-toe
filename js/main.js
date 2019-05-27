@@ -5,10 +5,13 @@ const CELL_CIRCLE = 1;
 
 const NOT_STARTED = 'NOT_STARTED';
 const GAME_STARTED = 'GAME_STARTED';
-const GAME_FINISHED = 'GAME_FINISHED';
 
 const CROSS_SIGN = 'CROSS';
 const CIRCLE_SIGN = 'CIRCLE';
+
+const DIR_ROW = 'DIR_ROW';
+const DIR_COL = 'DIR_COL';
+const DIR_DIAG = 'DIR_DIAG';
 
 // User Interface controller
 const UIController = (function() {
@@ -21,7 +24,8 @@ const UIController = (function() {
     activePlayer: '#active-player',
     grid: '.grid',
     gridCell: '.grid__cell',
-    cancelButton: '#cancel-button'
+    cancelButton: '#cancel-button',
+    gameStatus: '.game__status'
   };
 
   function validateNames() {
@@ -106,19 +110,10 @@ const UIController = (function() {
           Завершить
         </button>
       `;
-    } else if (stage === GAME_FINISHED) {
-      gameContainer.innerHTML = `
-        <!-- <p class="game__result">
-          Победил игрок: <span class="game__player-name">Player</span>!
-        </p>
-        <button class="game__btn">
-          Начать заново!
-        </button> -->
-      `;
     }
   }
 
-  function renderActivePlayer(playerName) {
+  function renderActivePlayerName(playerName) {
     document.querySelector(selectors.activePlayer).textContent = playerName;
   }
 
@@ -129,14 +124,47 @@ const UIController = (function() {
     el.classList.add(className);
   }
 
+  function renderGameOver(res, playerName) {
+    const cells = document.querySelectorAll(selectors.gridCell);
+
+    if (res.direction === DIR_ROW) {
+      for (let col = 0; col < 3; col++) {
+        cells[res.index + col + 2 * res.index].classList.add(
+          'grid__cell--success'
+        );
+      }
+    } else if (res.direction === DIR_COL) {
+      for (let row = 0; row < 3; row++) {
+        cells[row + res.index + 2 * row].classList.add('grid__cell--success');
+      }
+    } else {
+      res.index.forEach(([row, col]) =>
+        cells[row + col + 2 * row].classList.add('grid__cell--success')
+      );
+    }
+
+    document.querySelector(selectors.gameStatus).innerHTML = `
+      Победил игрок:
+      <span class="game__player-name" id="active-player">${playerName}</span>
+    `;
+  }
+
+  function renderDraw() {
+    document.querySelector(selectors.gameStatus).innerHTML = `
+      Ничья!
+    `;
+  }
+
   return {
     getSelectors: () => selectors,
     getElement: selector => document.querySelector(selector),
     changeStage,
     validateNames,
     getNames,
-    renderActivePlayer,
-    renderSign
+    renderActivePlayerName,
+    renderSign,
+    renderGameOver,
+    renderDraw
   };
 })();
 
@@ -160,7 +188,7 @@ const GameController = (function() {
     state.board[row][col] = sign;
   }
 
-  function checkCellIfEmpty(row, col) {
+  function isCellEmpty(row, col) {
     if (state.board[row][col] === CELL_EMPTY) return true;
     return false;
   }
@@ -182,11 +210,15 @@ const GameController = (function() {
   function checkWinCondition() {
     const winCondition = state.activeSign === CROSS_SIGN ? -3 : 3;
 
-    return (
-      checkRows(winCondition) ||
-      checkCols(winCondition) ||
-      checkDiags(winCondition)
-    );
+    const rows = checkRows(winCondition),
+      cols = checkCols(winCondition),
+      diags = checkDiags(winCondition);
+
+    if (rows.won) return rows;
+    if (cols.won) return cols;
+    if (diags.won) return diags;
+
+    return { won: false };
   }
 
   function checkRows(winCondition) {
@@ -197,10 +229,15 @@ const GameController = (function() {
         sum += state.board[row][col];
       }
 
-      if (sum === winCondition) return true;
+      if (sum === winCondition)
+        return {
+          won: true,
+          direction: DIR_ROW,
+          index: row
+        };
     }
 
-    return false;
+    return { won: false };
   }
 
   function checkCols(winCondition) {
@@ -211,18 +248,57 @@ const GameController = (function() {
         sum += state.board[row][col];
       }
 
-      if (sum === winCondition) return true;
+      if (sum === winCondition)
+        return {
+          won: true,
+          direction: DIR_COL,
+          index: col
+        };
     }
 
-    return false;
+    return { won: false };
   }
 
   function checkDiags(winCondition) {
-    return (
+    const res = {
+      won: false,
+      direction: DIR_DIAG,
+      index: null
+    };
+
+    if (
       state.board[0][0] + state.board[1][1] + state.board[2][2] ===
-        winCondition ||
-      state.board[0][2] + state.board[1][1] + state.board[2][0] === winCondition
-    );
+      winCondition
+    )
+      return {
+        ...res,
+        won: true,
+        index: [[0, 0], [1, 1], [2, 2]]
+      };
+
+    if (
+      state.board[0][2] + state.board[1][1] + state.board[2][0] ===
+      winCondition
+    )
+      return {
+        ...res,
+        won: true,
+        index: [[0, 2], [1, 1], [2, 0]]
+      };
+
+    return { won: false };
+  }
+
+  function checkDraw() {
+    let draw = true;
+
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (state.board[i][j] === CELL_EMPTY) draw = false;
+      }
+    }
+
+    return draw;
   }
 
   return {
@@ -236,30 +312,47 @@ const GameController = (function() {
     getActiveSign: () => state.activeSign,
     chooseWhosFirst: () => Math.round(Math.random()),
     setCell,
-    checkCellIfEmpty,
+    isCellEmpty,
     resetGame,
-    checkWinCondition
+    checkWinCondition,
+    checkDraw
   };
 })();
 
 // Main application controller
 const App = (function(UIController, GameController) {
+  /**
+   * Set event listener on start button click
+   */
   function setListenerOnStartButton() {
-    const btn = UIController.getElement(UIController.getSelectors().startBtn);
-
-    btn.addEventListener('click', handleStartButtonClick);
+    UIController.getElement(
+      UIController.getSelectors().startBtn
+    ).addEventListener('click', handleStartButtonClick);
   }
 
-  function clearListenerOnStartButton() {
-    const btn = UIController.getElement(UIController.getSelectors().startBtn);
+  /**
+   * Set event listener on grid click
+   */
+  function setListenerOnGrid() {
+    UIController.getElement(UIController.getSelectors().grid).addEventListener(
+      'click',
+      handleGridClick
+    );
+  }
 
-    btn.removeEventListener('click');
+  /**
+   * Set event listener on cancel button click
+   */
+  function setListenerOnCancelButton() {
+    UIController.getElement(
+      UIController.getSelectors().cancelButton
+    ).addEventListener('click', handleCancelButtonClick);
   }
 
   function handleStartButtonClick() {
-    const check = UIController.validateNames();
+    const checkNames = UIController.validateNames();
 
-    if (check) {
+    if (checkNames) {
       console.log('Game started');
 
       const playerNames = UIController.getNames();
@@ -272,17 +365,13 @@ const App = (function(UIController, GameController) {
       GameController.setStage(GAME_STARTED);
       UIController.changeStage(GAME_STARTED);
 
-      UIController.renderActivePlayer(GameController.getActivePlayerName());
+      UIController.renderActivePlayerName(GameController.getActivePlayerName());
 
       // Event listener on grid cell click
-      UIController.getElement(
-        UIController.getSelectors().grid
-      ).addEventListener('click', handleGridClick);
+      setListenerOnGrid();
 
       // Event listener on cancel button click
-      UIController.getElement(
-        UIController.getSelectors().cancelButton
-      ).addEventListener('click', handleCancelButtonClick);
+      setListenerOnCancelButton();
     }
   }
 
@@ -291,7 +380,7 @@ const App = (function(UIController, GameController) {
     const row = cell.dataset.row - 1,
       col = cell.dataset.col - 1;
 
-    if (GameController.checkCellIfEmpty(row, col)) {
+    if (GameController.isCellEmpty(row, col)) {
       const sign = GameController.getActiveSign();
 
       // Set sign in board array
@@ -301,17 +390,26 @@ const App = (function(UIController, GameController) {
       UIController.renderSign(cell, sign);
 
       // Check if player has won
-      const check = GameController.checkWinCondition();
+      const res = GameController.checkWinCondition();
 
-      if (check) console.log(GameController.getActivePlayerName(), ' has won!');
+      if (res.won) {
+        // Player has won
+        handleGameOver(res);
+      } else if (GameController.checkDraw()) {
+        // Noone has won
+        handleDraw();
+      } else {
+        // Game continues
+        // Change active player & active sign
+        GameController.setActivePlayer(+!GameController.getActivePlayer());
+        UIController.renderActivePlayerName(
+          GameController.getActivePlayerName()
+        );
 
-      // Change active player & active sign
-      GameController.setActivePlayer(+!GameController.getActivePlayer());
-      UIController.renderActivePlayer(GameController.getActivePlayerName());
-
-      GameController.setActiveSign(
-        sign === CROSS_SIGN ? CIRCLE_SIGN : CROSS_SIGN
-      );
+        GameController.setActiveSign(
+          sign === CROSS_SIGN ? CIRCLE_SIGN : CROSS_SIGN
+        );
+      }
     }
   }
 
@@ -325,18 +423,55 @@ const App = (function(UIController, GameController) {
     UIController.changeStage(NOT_STARTED);
 
     setListenerOnStartButton();
+    clearListenerOnCancelButton();
   }
 
+  /**
+   * Handle game over stage
+   * @param {object} res
+   */
+  function handleGameOver(res) {
+    const playerName = GameController.getActivePlayerName();
+
+    UIController.renderGameOver(res, playerName);
+
+    clearListenerOnGridClick();
+  }
+
+  /**
+   * Handle draw stage
+   */
+  function handleDraw() {
+    UIController.renderDraw();
+
+    clearListenerOnGridClick();
+  }
+
+  /**
+   * Remove event listener from start button
+   */
   function clearListenerOnStartButton() {
-    const btn = UIController.getElement(UIController.getSelectors().startBtn);
-
-    btn.removeEventListener('click', handleStartButtonClick);
+    UIController.getElement(
+      UIController.getSelectors().startBtn
+    ).removeEventListener('click', handleStartButtonClick);
   }
 
+  /**
+   * Remove event listener from grid
+   */
   function clearListenerOnGridClick() {
-    const grid = UIController.getElement(UIController.getSelectors().grid);
+    UIController.getElement(
+      UIController.getSelectors().grid
+    ).removeEventListener('click', handleGridClick);
+  }
 
-    grid.removeEventListener('click', handleGridClick);
+  /**
+   * Remove event listener from cancel button
+   */
+  function clearListenerOnCancelButton() {
+    UIController.getElement(
+      UIController.getSelectors().cancelButton
+    ).removeEventListener('click', handleCancelButtonClick);
   }
 
   return {

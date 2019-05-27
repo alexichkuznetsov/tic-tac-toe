@@ -138,9 +138,17 @@ body {
   background-image: url('../img/circle.svg');
 }
 
+.grid__cell--success {
+  background-color: rgba(79, 245, 45, 0.384);
+}
+
 .grid__cell:hover {
   background-color: rgba(0, 0, 0, 0.05);
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.05);
+}
+
+.grid__cell--success:hover {
+  background-color: rgba(79, 245, 45, 0.384);
 }
 
 .game__result {
