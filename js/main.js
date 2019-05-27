@@ -28,6 +28,9 @@ const UIController = (function() {
     gameStatus: '.game__status'
   };
 
+  /**
+   * Validate user inputs
+   */
   function validateNames() {
     const nameInput1 = document.querySelector(selectors.nameInput1),
       nameInput2 = document.querySelector(selectors.nameInput2);
@@ -49,6 +52,9 @@ const UIController = (function() {
     return true;
   }
 
+  /**
+   * Get user inputs
+   */
   function getNames() {
     const nameInput1 = document.querySelector(selectors.nameInput1),
       nameInput2 = document.querySelector(selectors.nameInput2);
@@ -56,6 +62,10 @@ const UIController = (function() {
     return [nameInput1.value, nameInput2.value];
   }
 
+  /**
+   * Change user interface depending on stage
+   * @param {String} stage
+   */
   function changeStage(stage) {
     const gameContainer = document.querySelector(selectors.gameContainer);
 
@@ -113,10 +123,19 @@ const UIController = (function() {
     }
   }
 
+  /**
+   * Display active user name
+   * @param {String} playerName
+   */
   function renderActivePlayerName(playerName) {
     document.querySelector(selectors.activePlayer).textContent = playerName;
   }
 
+  /**
+   * Change cell's class which corresponds to a sign
+   * @param {Node} el
+   * @param {String} sign
+   */
   function renderSign(el, sign) {
     const className =
       sign === CROSS_SIGN ? 'grid__cell--cross' : 'grid__cell--circle';
@@ -124,6 +143,11 @@ const UIController = (function() {
     el.classList.add(className);
   }
 
+  /**
+   * Highlight winning cells and display winner name
+   * @param {Object} res
+   * @param {String} playerName
+   */
   function renderGameOver(res, playerName) {
     const cells = document.querySelectorAll(selectors.gridCell);
 
@@ -149,6 +173,9 @@ const UIController = (function() {
     `;
   }
 
+  /**
+   * Display draw
+   */
   function renderDraw() {
     document.querySelector(selectors.gameStatus).innerHTML = `
       Ничья!
@@ -182,17 +209,30 @@ const GameController = (function() {
     activeSign: null
   };
 
+  /**
+   * Set corresponding sign to cell at [row][col]
+   * @param {Integer} row
+   * @param {Integer} col
+   */
   function setCell(row, col) {
     sign = state.activeSign === CROSS_SIGN ? CELL_CROSS : CELL_CIRCLE;
 
     state.board[row][col] = sign;
   }
 
+  /**
+   * Check if cell at [row][col] is empty
+   * @param {Integer} row
+   * @param {Integer} col
+   */
   function isCellEmpty(row, col) {
     if (state.board[row][col] === CELL_EMPTY) return true;
     return false;
   }
 
+  /**
+   * Reset game and state
+   */
   function resetGame() {
     state = {
       gameStage: NOT_STARTED,
@@ -207,6 +247,9 @@ const GameController = (function() {
     };
   }
 
+  /**
+   * Check if active player has won
+   */
   function checkWinCondition() {
     const winCondition = state.activeSign === CROSS_SIGN ? -3 : 3;
 
@@ -221,6 +264,10 @@ const GameController = (function() {
     return { won: false };
   }
 
+  /**
+   * Check rows for correct sum
+   * @param {Integer} winCondition
+   */
   function checkRows(winCondition) {
     for (let row = 0; row < 3; row++) {
       let sum = 0;
@@ -240,6 +287,10 @@ const GameController = (function() {
     return { won: false };
   }
 
+  /**
+   * Check columns for correct sum
+   * @param {Integer} winCondition
+   */
   function checkCols(winCondition) {
     for (let col = 0; col < 3; col++) {
       let sum = 0;
@@ -259,6 +310,10 @@ const GameController = (function() {
     return { won: false };
   }
 
+  /**
+   * Check diagonals for correct sum
+   * @param {Integer} winCondition
+   */
   function checkDiags(winCondition) {
     const res = {
       won: false,
@@ -289,6 +344,9 @@ const GameController = (function() {
     return { won: false };
   }
 
+  /**
+   * Check if game ended with draw
+   */
   function checkDraw() {
     let draw = true;
 
@@ -428,7 +486,7 @@ const App = (function(UIController, GameController) {
 
   /**
    * Handle game over stage
-   * @param {object} res
+   * @param {Object} res
    */
   function handleGameOver(res) {
     const playerName = GameController.getActivePlayerName();
@@ -475,6 +533,9 @@ const App = (function(UIController, GameController) {
   }
 
   return {
+    /**
+     * Main initialization function
+     */
     init() {
       console.log('App initialized..');
 
